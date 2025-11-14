@@ -2,10 +2,10 @@
 
 import { storage } from '../utils/storage';
 
-// Default fallback location (User's provided coordinates)
+// Default fallback location (Phoenix, AZ - User's coordinates)
 const DEFAULT_LOCATION = {
-  lat: 37.751,
-  lon: -97.822,
+  lat: 33.47935175022482,
+  lon: -112.1063668296539,
   accuracy: 0,
   timestamp: Date.now(),
   isDefault: true,
