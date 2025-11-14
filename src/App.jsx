@@ -62,13 +62,13 @@ function App() {
 
       // Try to use cached data if available
       const cachedData = storage.getLastWeatherData();
-      if (cachedData && !weatherData) {
+      if (cachedData) {
         setWeatherData(cachedData);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [tempRange, weatherData]);
+  }, [tempRange]);
 
   // Initialize app
   useEffect(() => {
