@@ -216,6 +216,24 @@ function App() {
           </div>
         )}
 
+        {/* Default Location Indicator */}
+        {location?.isDefault && !error && (
+          <div className="bg-blue-500/20 border border-blue-400/50 rounded-2xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">📍</span>
+              <div className="flex-1">
+                <div className="text-blue-400 font-semibold mb-1">Using Default Location</div>
+                <div className="text-white/70 text-sm">
+                  Auto-detection unavailable. Showing weather for Phoenix, AZ.
+                </div>
+                <div className="text-white/50 text-xs mt-2">
+                  Enable location services in System Settings to use your actual location
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Snooze Indicator */}
         {snoozedMinutes > 0 && (
           <div className="bg-purple-500/20 border border-purple-400/50 rounded-2xl p-4 mb-6">

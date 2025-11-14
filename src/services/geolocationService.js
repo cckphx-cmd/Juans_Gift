@@ -2,6 +2,15 @@
 
 import { storage } from '../utils/storage';
 
+// Default fallback location (Phoenix, AZ - since app is Arizona-optimized)
+const DEFAULT_LOCATION = {
+  lat: 33.4484,
+  lon: -112.0740,
+  accuracy: 0,
+  timestamp: Date.now(),
+  isDefault: true,
+};
+
 // Get user's current position using browser API
 export const getCurrentPosition = () => {
   return new Promise((resolve, reject) => {
@@ -17,6 +26,7 @@ export const getCurrentPosition = () => {
           lon: position.coords.longitude,
           accuracy: position.coords.accuracy,
           timestamp: Date.now(),
+          isDefault: false,
         };
 
         // Save to localStorage
@@ -50,7 +60,7 @@ export const getCurrentPosition = () => {
   });
 };
 
-// Get location from storage or fetch new
+// Get location from storage or fetch new, with fallback to default
 export const getLocation = async () => {
   const stored = storage.getLocation();
 
@@ -59,8 +69,17 @@ export const getLocation = async () => {
     return stored;
   }
 
-  // Otherwise fetch new location
-  return await getCurrentPosition();
+  // Try to fetch new location
+  try {
+    return await getCurrentPosition();
+  } catch (error) {
+    console.warn('Geolocation failed, using default location (Phoenix, AZ):', error.message);
+
+    // Use default location as fallback
+    const defaultLocation = { ...DEFAULT_LOCATION, timestamp: Date.now() };
+    storage.setLocation(defaultLocation);
+    return defaultLocation;
+  }
 };
 
 // Watch for location changes (useful for mobile users)
