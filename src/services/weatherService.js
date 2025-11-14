@@ -99,7 +99,7 @@ export const fetchCurrentWeather = async (lat, lon) => {
   }
 };
 
-// Fetch UV index data (using One Call API 3.0)
+// Fetch UV index data (FREE tier - simplified approach)
 export const fetchUVIndex = async (lat, lon) => {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -107,28 +107,37 @@ export const fetchUVIndex = async (lat, lon) => {
   }
 
   try {
-    // Using One Call API 3.0 for UV index
+    // Using UV Index API (free tier)
     const response = await fetch(
-      `${API_BASE_URL}/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&appid=${apiKey}`
+      `${API_BASE_URL}/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`
     );
 
     if (!response.ok) {
+      // UV API might not be available, use estimated value based on time
       throw new Error(`UV API error: ${response.status}`);
     }
 
     const data = await response.json();
 
     return {
-      current: data.current.uvi || 0,
-      hourly: data.hourly.slice(0, 24).map(h => ({
-        dt: h.dt,
-        uvi: h.uvi,
-      })),
+      current: data.value || 0,
+      hourly: [], // Hourly UV not available in free tier
     };
   } catch (error) {
     console.error('Error fetching UV index:', error);
-    // Return default if UV data unavailable
-    return { current: 0, hourly: [] };
+    // Return estimated UV based on time of day (simple fallback)
+    const now = new Date();
+    const hour = now.getHours();
+    let estimatedUV = 0;
+
+    // Rough estimation: UV peaks around noon
+    if (hour >= 10 && hour <= 16) {
+      estimatedUV = 7; // High UV during midday
+    } else if (hour >= 8 && hour <= 18) {
+      estimatedUV = 3; // Moderate UV morning/evening
+    }
+
+    return { current: estimatedUV, hourly: [] };
   }
 };
 
