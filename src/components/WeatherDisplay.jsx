@@ -119,11 +119,19 @@ const WeatherDisplay = ({ weatherData, idealTemp, onRefresh, isLoading }) => {
           </div>
           <div className="text-3xl font-bold text-white mb-1">
             {uv.current.toFixed(1)}
+            {uv.isEstimated && (
+              <span className="text-xs text-white/40 ml-1">*</span>
+            )}
           </div>
           <div className={`text-sm ${uvLevel.color}`}>
             {uvLevel.level}
           </div>
-          {!isNight && uv.current > 3 && (
+          {uv.isEstimated && (
+            <div className="text-xs text-white/40 mt-1">
+              Estimated
+            </div>
+          )}
+          {!isNight && uv.current > 3 && !uv.isEstimated && (
             <div className="text-xs text-white/50 mt-2">
               Sun strength affects heating
             </div>

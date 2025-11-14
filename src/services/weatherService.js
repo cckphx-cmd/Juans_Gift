@@ -99,46 +99,46 @@ export const fetchCurrentWeather = async (lat, lon) => {
   }
 };
 
-// Fetch UV index data (FREE tier - simplified approach)
+// Estimate UV index based on time of day and season (FREE tier compatible)
+// UV API is not available in free tier, so we use smart estimation
 export const fetchUVIndex = async (lat, lon) => {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error('API key not configured');
+  // Time-based UV estimation optimized for Arizona/Phoenix climate
+  const now = new Date();
+  const hour = now.getHours();
+  const month = now.getMonth() + 1; // 1-12
+
+  let estimatedUV = 0;
+
+  // Arizona gets very high UV, especially in summer
+  // Peak UV: 10 AM - 4 PM
+  // Summer months (May-Sep): Higher UV
+  // Winter months (Nov-Feb): Lower UV
+
+  const isSummer = month >= 5 && month <= 9;
+  const isWinter = month >= 11 || month <= 2;
+
+  if (hour >= 11 && hour <= 15) {
+    // Peak sun hours (11 AM - 3 PM)
+    estimatedUV = isSummer ? 10 : (isWinter ? 5 : 7);
+  } else if (hour >= 10 && hour <= 16) {
+    // Strong sun hours (10 AM - 4 PM)
+    estimatedUV = isSummer ? 8 : (isWinter ? 4 : 6);
+  } else if (hour >= 8 && hour <= 18) {
+    // Morning/evening sun
+    estimatedUV = isSummer ? 5 : (isWinter ? 2 : 3);
+  } else if (hour >= 6 && hour <= 19) {
+    // Early morning/late evening
+    estimatedUV = isSummer ? 2 : 1;
   }
+  // Otherwise estimatedUV stays 0 (nighttime)
 
-  try {
-    // Using UV Index API (free tier)
-    const response = await fetch(
-      `${API_BASE_URL}/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`
-    );
+  console.log(`UV Index estimated: ${estimatedUV} (Hour: ${hour}, Month: ${month})`);
 
-    if (!response.ok) {
-      // UV API might not be available, use estimated value based on time
-      throw new Error(`UV API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    return {
-      current: data.value || 0,
-      hourly: [], // Hourly UV not available in free tier
-    };
-  } catch (error) {
-    console.error('Error fetching UV index:', error);
-    // Return estimated UV based on time of day (simple fallback)
-    const now = new Date();
-    const hour = now.getHours();
-    let estimatedUV = 0;
-
-    // Rough estimation: UV peaks around noon
-    if (hour >= 10 && hour <= 16) {
-      estimatedUV = 7; // High UV during midday
-    } else if (hour >= 8 && hour <= 18) {
-      estimatedUV = 3; // Moderate UV morning/evening
-    }
-
-    return { current: estimatedUV, hourly: [] };
-  }
+  return {
+    current: estimatedUV,
+    hourly: [],
+    isEstimated: true, // Flag to indicate this is estimated, not from API
+  };
 };
 
 // Fetch air quality data
@@ -231,15 +231,30 @@ export const fetchForecast = async (lat, lon) => {
   }
 };
 
-// Fetch all weather data in one call
+// Fetch all weather data (using only FREE tier APIs)
 export const fetchAllWeatherData = async (lat, lon) => {
   try {
-    const [current, uvData, airQuality, forecast] = await Promise.all([
+    // Fetch essential data first (current weather and forecast are critical)
+    const [current, forecast] = await Promise.all([
       fetchCurrentWeather(lat, lon),
-      fetchUVIndex(lat, lon),
-      fetchAirQuality(lat, lon),
       fetchForecast(lat, lon),
     ]);
+
+    // Fetch optional data (UV and air quality) - don't fail if these error
+    let uvData = { current: 0, hourly: [], isEstimated: true };
+    let airQuality = { aqi: 0, components: {} };
+
+    try {
+      uvData = await fetchUVIndex(lat, lon);
+    } catch (error) {
+      console.warn('UV data unavailable, using estimation:', error);
+    }
+
+    try {
+      airQuality = await fetchAirQuality(lat, lon);
+    } catch (error) {
+      console.warn('Air quality data unavailable:', error);
+    }
 
     return {
       current,
