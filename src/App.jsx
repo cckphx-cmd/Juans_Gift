@@ -224,10 +224,10 @@ function App() {
               <div className="flex-1">
                 <div className="text-blue-400 font-semibold mb-1">Using Default Location</div>
                 <div className="text-white/70 text-sm">
-                  Auto-detection unavailable. Showing weather for Phoenix, AZ.
+                  Auto-detection unavailable. Showing weather for your area.
                 </div>
                 <div className="text-white/50 text-xs mt-2">
-                  Enable location services in System Settings to use your actual location
+                  Enable location services in System Settings for automatic updates
                 </div>
               </div>
             </div>
