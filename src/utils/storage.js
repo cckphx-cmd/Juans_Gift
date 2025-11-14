@@ -1,19 +1,23 @@
 // LocalStorage utility for persisting user preferences and app state
 
 const STORAGE_KEYS = {
-  IDEAL_TEMP: 'windowWeather_idealTemp',
-  QUIET_HOURS: 'windowWeather_quietHours',
-  LOCATION: 'windowWeather_location',
-  LAST_NOTIFICATION: 'windowWeather_lastNotification',
-  NOTIFICATION_SNOOZE: 'windowWeather_notificationSnooze',
-  ONBOARDING_COMPLETE: 'windowWeather_onboardingComplete',
-  LAST_WEATHER_DATA: 'windowWeather_lastWeatherData',
-  NOTIFICATION_ENABLED: 'windowWeather_notificationEnabled',
+  TEMP_RANGE: 'juansWindowApp_tempRange',
+  IDEAL_TEMP: 'windowWeather_idealTemp', // Legacy - for migration
+  QUIET_HOURS: 'juansWindowApp_quietHours',
+  LOCATION: 'juansWindowApp_location',
+  LAST_NOTIFICATION: 'juansWindowApp_lastNotification',
+  NOTIFICATION_SNOOZE: 'juansWindowApp_notificationSnooze',
+  ONBOARDING_COMPLETE: 'juansWindowApp_onboardingComplete',
+  LAST_WEATHER_DATA: 'juansWindowApp_lastWeatherData',
+  NOTIFICATION_ENABLED: 'juansWindowApp_notificationEnabled',
 };
 
 // Default values
 const DEFAULTS = {
-  idealTemp: 75, // Fahrenheit
+  tempRange: {
+    min: 65, // Minimum comfortable temperature (Fahrenheit)
+    max: 78, // Maximum comfortable temperature (Fahrenheit)
+  },
   quietHours: {
     start: '08:00',
     end: '22:00',
@@ -23,13 +27,37 @@ const DEFAULTS = {
 };
 
 export const storage = {
-  // Ideal temperature
+  // Temperature range (min/max for comfortable window-opening temps)
+  getTempRange: () => {
+    const stored = localStorage.getItem(STORAGE_KEYS.TEMP_RANGE);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+
+    // Migration: Check if old idealTemp exists
+    const oldIdealTemp = localStorage.getItem(STORAGE_KEYS.IDEAL_TEMP);
+    if (oldIdealTemp) {
+      const temp = parseFloat(oldIdealTemp);
+      // Convert single temp to range (±5 degrees)
+      return {
+        min: temp - 5,
+        max: temp + 5,
+      };
+    }
+
+    return DEFAULTS.tempRange;
+  },
+  setTempRange: (range) => {
+    localStorage.setItem(STORAGE_KEYS.TEMP_RANGE, JSON.stringify(range));
+  },
+
+  // Legacy support - deprecated
   getIdealTemp: () => {
-    const stored = localStorage.getItem(STORAGE_KEYS.IDEAL_TEMP);
-    return stored ? parseFloat(stored) : DEFAULTS.idealTemp;
+    const range = storage.getTempRange();
+    return (range.min + range.max) / 2; // Return midpoint
   },
   setIdealTemp: (temp) => {
-    localStorage.setItem(STORAGE_KEYS.IDEAL_TEMP, temp.toString());
+    storage.setTempRange({ min: temp - 5, max: temp + 5 });
   },
 
   // Quiet hours

@@ -26,7 +26,7 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(!storage.isOnboardingComplete());
   const [showSettings, setShowSettings] = useState(false);
   const [weatherData, setWeatherData] = useState(storage.getLastWeatherData());
-  const [idealTemp, setIdealTemp] = useState(storage.getIdealTemp());
+  const [tempRange, setTempRange] = useState(storage.getTempRange());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [location, setLocation] = useState(null);
@@ -55,7 +55,7 @@ function App() {
       storage.setLastWeatherData(data);
 
       // Check if we should send a notification
-      checkAndNotify(data, idealTemp);
+      checkAndNotify(data, tempRange);
     } catch (err) {
       console.error('Error fetching weather:', err);
       setError(err.message);
@@ -68,7 +68,7 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [idealTemp, weatherData]);
+  }, [tempRange, weatherData]);
 
   // Initialize app
   useEffect(() => {
@@ -112,14 +112,14 @@ function App() {
     requestNotificationPermission();
   };
 
-  // Handle ideal temperature change
-  const handleIdealTempChange = (newTemp) => {
-    setIdealTemp(newTemp);
-    storage.setIdealTemp(newTemp);
+  // Handle temperature range change
+  const handleTempRangeChange = (newRange) => {
+    setTempRange(newRange);
+    storage.setTempRange(newRange);
 
-    // Recheck notification logic with new temperature
+    // Recheck notification logic with new range
     if (weatherData) {
-      checkAndNotify(weatherData, newTemp);
+      checkAndNotify(weatherData, newRange);
     }
   };
 
@@ -163,7 +163,7 @@ function App() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-              🪟 Window Weather
+              🪟 Juan's Window App
             </h1>
             {location && (
               <p className="text-white/60 text-sm mt-1">
@@ -256,9 +256,9 @@ function App() {
         {/* Temperature Slider */}
         <div className="mb-6">
           <TemperatureSlider
-            idealTemp={idealTemp}
+            tempRange={tempRange}
             currentTemp={weatherData?.current?.temp}
-            onChange={handleIdealTempChange}
+            onChange={handleTempRangeChange}
           />
         </div>
 
@@ -278,7 +278,7 @@ function App() {
         <div className="mb-6">
           <WeatherDisplay
             weatherData={weatherData}
-            idealTemp={idealTemp}
+            tempRange={tempRange}
             onRefresh={handleRefresh}
             isLoading={isLoading}
           />
@@ -289,7 +289,7 @@ function App() {
           <div className="mb-6">
             <TemperatureChart
               weatherData={weatherData}
-              idealTemp={idealTemp}
+              tempRange={tempRange}
             />
           </div>
         )}

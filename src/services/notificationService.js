@@ -60,7 +60,8 @@ const isSnoozed = () => {
 };
 
 // Determine if windows should be open or closed
-export const evaluateWindowCondition = (weatherData, idealTemp) => {
+// tempRange should be { min, max } - the comfortable temperature range
+export const evaluateWindowCondition = (weatherData, tempRange) => {
   if (!weatherData?.current || !weatherData?.uv) {
     return { action: null, reason: 'No weather data' };
   }
@@ -73,10 +74,10 @@ export const evaluateWindowCondition = (weatherData, idealTemp) => {
   const isNight = now < current.sunrise || now > current.sunset;
   const isEvening = now > current.sunset - 3600; // Within 1 hour of sunset
 
-  // Temperature thresholds
-  const idealLow = idealTemp - 2;
-  const idealHigh = idealTemp + 2;
-  const tooHot = idealTemp + 3;
+  // Temperature range from user settings
+  const minTemp = tempRange.min;
+  const maxTemp = tempRange.max;
+  const rangeMiddle = (minTemp + maxTemp) / 2;
 
   // Check for storms
   const hasStorms = weatherData.forecast?.hasStorms;
@@ -92,17 +93,26 @@ export const evaluateWindowCondition = (weatherData, idealTemp) => {
     };
   }
 
-  // Priority 2: Close if way too hot
-  if (temp > tooHot) {
+  // Priority 2: Close if too hot (above max range)
+  if (temp > maxTemp + 3) {
     return {
       action: 'close',
-      reason: `It's ${temp}°F - too hot outside`,
+      reason: `It's ${temp}°F - too hot (max: ${maxTemp}°F)`,
+      priority: 'high',
+    };
+  }
+
+  // Priority 3: Close if too cold (below min range)
+  if (temp < minTemp - 5) {
+    return {
+      action: 'close',
+      reason: `It's ${temp}°F - too cold (min: ${minTemp}°F)`,
       priority: 'medium',
     };
   }
 
-  // Priority 3: Close if high UV and warm (Arizona sun consideration)
-  if (currentUV > 7 && temp > idealTemp) {
+  // Priority 4: Close if high UV and above middle of range (Arizona sun consideration)
+  if (currentUV > 7 && temp > rangeMiddle) {
     return {
       action: 'close',
       reason: `High UV (${currentUV.toFixed(1)}) and ${temp}°F - will heat up fast`,
@@ -110,29 +120,29 @@ export const evaluateWindowCondition = (weatherData, idealTemp) => {
     };
   }
 
-  // Priority 4: Open if temperature is ideal
-  if (temp >= idealLow && temp <= idealHigh) {
+  // Priority 5: OPEN if temperature is within the perfect range
+  if (temp >= minTemp && temp <= maxTemp) {
     // Check UV if it's daytime
     if (!isNight && !isEvening && currentUV > 5) {
       return {
         action: 'neutral',
-        reason: `Temperature is perfect (${temp}°F) but UV is ${currentUV.toFixed(1)}`,
+        reason: `Temperature is in range (${temp}°F) but UV is ${currentUV.toFixed(1)}`,
         priority: 'low',
       };
     }
 
     return {
       action: 'open',
-      reason: `Perfect weather! ${temp}°F with ${isNight ? 'no sun' : 'low UV (' + currentUV.toFixed(1) + ')'}`,
+      reason: `Perfect weather! ${temp}°F is in your range (${minTemp}-${maxTemp}°F)`,
       priority: 'high',
     };
   }
 
-  // Priority 5: Open if cooler than ideal with low UV or nighttime
-  if (temp < idealLow && (isNight || currentUV < 5)) {
+  // Priority 6: Slightly out of range but comfortable
+  if (temp >= minTemp - 3 && temp <= maxTemp + 3 && (isNight || currentUV < 5)) {
     return {
       action: 'open',
-      reason: `Cool and pleasant at ${temp}°F`,
+      reason: `Pleasant at ${temp}°F (close to your range)`,
       priority: 'low',
     };
   }
@@ -140,7 +150,7 @@ export const evaluateWindowCondition = (weatherData, idealTemp) => {
   // Default: No strong recommendation
   return {
     action: 'neutral',
-    reason: `Current: ${temp}°F, UV: ${currentUV.toFixed(1)}`,
+    reason: `Current: ${temp}°F (Your range: ${minTemp}-${maxTemp}°F)`,
     priority: 'low',
   };
 };
@@ -172,7 +182,8 @@ const sendNotification = (title, body, tag, icon = '🪟') => {
 };
 
 // Check weather and send appropriate notification if needed
-export const checkAndNotify = (weatherData, idealTemp) => {
+// tempRange should be { min, max } - the comfortable temperature range
+export const checkAndNotify = (weatherData, tempRange) => {
   // Don't notify if notifications are disabled or we can't send them
   if (!canSendNotifications()) {
     return null;
@@ -189,7 +200,7 @@ export const checkAndNotify = (weatherData, idealTemp) => {
   }
 
   // Evaluate window condition
-  const condition = evaluateWindowCondition(weatherData, idealTemp);
+  const condition = evaluateWindowCondition(weatherData, tempRange);
 
   // Only send notifications for high priority actions
   if (condition.priority !== 'high' && condition.priority !== 'medium') {

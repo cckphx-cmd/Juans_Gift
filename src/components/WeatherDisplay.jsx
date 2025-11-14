@@ -1,7 +1,7 @@
 import { getAQIColor, getUVLevel } from '../services/weatherService';
 import { evaluateWindowCondition } from '../services/notificationService';
 
-const WeatherDisplay = ({ weatherData, idealTemp, onRefresh, isLoading }) => {
+const WeatherDisplay = ({ weatherData, tempRange, onRefresh, isLoading }) => {
   if (!weatherData?.current) {
     return (
       <div className="glass rounded-3xl p-8 text-center">
@@ -15,7 +15,7 @@ const WeatherDisplay = ({ weatherData, idealTemp, onRefresh, isLoading }) => {
   const { current, uv, airQuality, forecast } = weatherData;
   const uvLevel = getUVLevel(uv.current);
   const aqiInfo = getAQIColor(airQuality.aqi);
-  const windowCondition = evaluateWindowCondition(weatherData, idealTemp);
+  const windowCondition = evaluateWindowCondition(weatherData, tempRange);
 
   // Check if it's nighttime
   const now = Date.now() / 1000;

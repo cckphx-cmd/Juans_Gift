@@ -1,8 +1,8 @@
-# 🪟 Window Weather
+# 🪟 Juan's Window App
 
 A smart, mobile-first web application that sends intelligent notifications about when to open or close your windows based on real-time weather conditions. Optimized for Arizona's intense sun and heat!
 
-![Window Weather](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Juan's Window App](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![React](https://img.shields.io/badge/React-18.3-61DAFB.svg?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-5.4-646CFF.svg?logo=vite)
 

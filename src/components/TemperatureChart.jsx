@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
-const TemperatureChart = ({ weatherData, idealTemp }) => {
+const TemperatureChart = ({ weatherData, tempRange }) => {
   if (!weatherData?.forecast?.hourly) {
     return (
       <div className="glass rounded-2xl p-6">
@@ -59,16 +59,30 @@ const TemperatureChart = ({ weatherData, idealTemp }) => {
             />
             <Tooltip content={<CustomTooltip />} />
 
-            {/* Ideal temperature reference line */}
+            {/* Minimum comfortable temperature reference line */}
             <ReferenceLine
-              y={idealTemp}
+              y={tempRange.min}
               stroke="#10b981"
               strokeDasharray="5 5"
               strokeWidth={2}
               label={{
-                value: `Ideal ${idealTemp}°F`,
+                value: `Min ${tempRange.min}°F`,
                 fill: '#10b981',
-                fontSize: 12,
+                fontSize: 11,
+                position: 'insideBottomRight',
+              }}
+            />
+
+            {/* Maximum comfortable temperature reference line */}
+            <ReferenceLine
+              y={tempRange.max}
+              stroke="#10b981"
+              strokeDasharray="5 5"
+              strokeWidth={2}
+              label={{
+                value: `Max ${tempRange.max}°F`,
+                fill: '#10b981',
+                fontSize: 11,
                 position: 'insideTopRight',
               }}
             />
@@ -106,7 +120,7 @@ const TemperatureChart = ({ weatherData, idealTemp }) => {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-1 bg-green-500 rounded" style={{ backgroundImage: 'repeating-linear-gradient(to right, #10b981 0, #10b981 5px, transparent 5px, transparent 10px)' }}></div>
-          <span className="text-white/70">Your Ideal</span>
+          <span className="text-white/70">Your Range ({tempRange.min}-{tempRange.max}°F)</span>
         </div>
       </div>
     </div>
